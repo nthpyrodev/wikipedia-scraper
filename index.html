@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive SVG Viewer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #svg-container {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #ccc; /* Optional: Add border for visualization */
+        }
+        #svg-object {
+            width: 100%;
+            height: 100%;
+            border: none;
+            overflow: hidden;
+            transform-origin: 0 0;
+            cursor: grab;
+        }
+        .zoom-buttons {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        .zoom-buttons button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="svg-container">
+        <!-- SVG content will be loaded here -->
+        <!-- Replace the data attribute with the path to your SVG file -->
+        <object id="svg-object" data="interlinking_graph.svg" type="image/svg+xml"></object>
+        <div class="zoom-buttons">
+            <button onclick="zoomIn()">Zoom In</button>
+            <button onclick="zoomOut()">Zoom Out</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const svgObject = document.getElementById('svg-object');
+            let isDragging = false;
+            let startX, startY;
+            let scale = 1;
+            let translateX = 0;
+            let translateY = 0;
+
+            svgObject.onload = function() {
+                const svgDoc = svgObject.contentDocument.documentElement;
+
+                // Add event listeners for mouse/touch events directly to the SVG document
+                svgDoc.addEventListener('mousedown', startDrag);
+                svgDoc.addEventListener('touchstart', startDrag);
+                svgDoc.addEventListener('mouseup', endDrag);
+                svgDoc.addEventListener('touchend', endDrag);
+                svgDoc.addEventListener('mousemove', drag);
+                svgDoc.addEventListener('touchmove', drag);
+
+                // Add event listener for keydown events
+                document.addEventListener('keydown', handleKeyDown);
+                document.addEventListener('keyup', handleKeyUp);
+
+                function startDrag(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startX = e.clientX || e.touches[0].clientX;
+                    startY = e.clientY || e.touches[0].clientY;
+                }
+
+                function endDrag() {
+                    isDragging = false;
+                }
+
+                function drag(e) {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const newX = e.clientX || e.touches[0].clientX;
+                    const newY = e.clientY || e.touches[0].clientY;
+                    const deltaX = newX - startX;
+                    const deltaY = newY - startY;
+                    translateX += deltaX;
+                    translateY += deltaY;
+                    svgDoc.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                    startX = newX;
+                    startY = newY;
+                }
+            };
+
+            function zoomIn() {
+                scale += 0.1;
+                svgObject.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            }
+
+            function zoomOut() {
+                scale -= 0.1;
+                svgObject.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            }
+
+            function handleKeyDown(event) {
+                // Zoom in when pressing 'Ctrl' and '='
+                if (event.ctrlKey && event.key === '=') {
+                    zoomIn();
+                }
+                // Zoom out when pressing 'Ctrl' and '-'
+                if (event.ctrlKey && event.key === '-') {
+                    zoomOut();
+                }
+            }
+
+            function handleKeyUp(event) {
+                // Reset the scale and translation when releasing 'Ctrl' key
+                if (event.key === 'Control') {
+                    scale = 1;
+                    translateX = 0;
+                    translateY = 0;
+                    svgObject.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
